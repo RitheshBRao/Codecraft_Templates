@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+<suite name="Regression suite" verbose="1">
+
+    <parameter name="environment" value="samsung_7"/>
+
+    <test name="Login Test Cases" >
+        <classes>
+                <class name="com.web.template.LoginTests.LoginTests"/>
+        </classes>
+    </test>
+
+</suite>

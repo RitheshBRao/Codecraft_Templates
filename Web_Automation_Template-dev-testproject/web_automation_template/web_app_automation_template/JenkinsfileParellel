@@ -1,0 +1,246 @@
+def generateStage(phone) {
+
+        stage("stage: ${phone}") {
+
+                echo "This is ${phone}."
+
+                env.FAILURE_STAGE = 'build_generate'
+
+                def values = phone.split('-')
+
+                env.device = values[0]
+
+                env.os = values[1]
+
+                sh 'printenv'
+
+
+
+
+
+                browserstack('f9a75432-390a-44c5-b249-ab6486a38a69'){}
+
+                browserstackAppUploader(appPath: '/Users/admin/Downloads/latest-debug.apk'){
+
+                    script {
+
+                        env.BROWSERSTACK_APP_ID="androidapp_qa2"
+
+                    }
+
+                }
+
+                sh "mvn test -Dsurefire.suiteXmlFiles=src/test/java/com/mobile/template/${type}.xml"
+
+
+
+
+                junit testDataPublishers: [[$class: 'AutomateTestDataPublisher']], testResults: 'EnlightenProject/target/surefire-reports/TEST-*.xml'
+
+
+
+            }
+
+
+
+}
+
+
+
+
+
+def parallelStages(a,b) {
+
+    def stages = [:]
+
+    stages[a] = {
+
+        generateStage(a)
+
+    }
+
+    stages[b] = {
+
+       generateStage(b)
+
+    }
+
+    return stages
+
+}
+
+
+
+
+
+pipeline {
+
+    agent any
+
+    triggers {
+
+        parameterizedCron('''
+
+            H 0 * * 1 % model=Pixel_4-11.0;type=testSanity
+
+            H 0 * * 3 % model=Pixel_4-11.0;type=testSanity
+
+            54 9 * * 5 % model=Pixel_4-11.0;type=testSanity
+
+            50 19 * * * % model=samsung_s10-9.0,samsung_s9-8.0,samsung_s20-10.0,oneplus_7-9.0;type=testng
+
+            ''')
+
+    }
+
+    stages {
+
+
+
+        stage('parallel stage') {
+
+            steps {
+
+                script {
+
+                    echo "This is ${model}."
+
+                     sh "mvn clean"
+
+                    def devices = model.tokenize(",")
+
+                    println "=======[ Parallel Jobs: ${devices} ]======="
+
+                   for(int i=devices.size(); i > 0 ; i--) {
+
+                        echo "${devices[i-1]}"
+
+                        if(i>=env.license.toInteger() && env.license.toInteger() != 1){
+
+                            parallel parallelStages(devices[i-1],devices[i-2])
+
+                            i--;
+
+                        }
+
+                        else{
+
+                           generateStage(devices[i-1])
+
+                        }
+
+                    }
+
+                }
+
+            }
+
+        }
+
+    }
+
+     post{
+
+        always{
+
+
+
+            allure([
+
+                includeProperties: false,
+
+                jdk: '',
+
+                properties: [],
+
+                reportBuildPolicy: 'ALWAYS',
+
+                results: [[path: 'EnlightenProject/allure-results']]
+
+            ])
+
+        }
+
+        success{
+
+            echo "Success Pipeline: ${currentBuild.fullDisplayName}"
+
+            script {
+
+                    def mailRecipients = 'ostan@codecraft.co.in, odsouza@enphaseenergy.com'
+
+                    def jobName = currentBuild.fullDisplayName
+
+                    emailext body: '''${FILE,path="HTMLReporter/index.html"}''',
+
+                    mimeType: 'text/html',
+
+                    subject: "[Jenkins][${currentBuild.result}] Test Automation Report",
+
+                    to: "${mailRecipients}",
+
+                    replyTo: "${mailRecipients}",
+
+                    recipientProviders: [[$class: 'CulpritsRecipientProvider']]
+
+                }
+
+        }
+
+        failure {
+
+            echo "Failure Pipeline: ${currentBuild.result}"
+
+            echo "Attention @here ${env.JOB_NAME} #${env.BUILD_NUMBER} has failed."
+
+            script {
+
+                    def mailRecipients = 'ostan@codecraft.co.in, odsouza@enphaseenergy.com'
+
+                    def jobName = currentBuild.fullDisplayName
+
+                    emailext body: '''${FILE,path="HTMLReporter/index.html"}''',
+
+                    mimeType: 'text/html',
+
+                    subject: "[Jenkins][${currentBuild.result}] Build is failing in ${env.FAILURE_STAGE} stage",
+
+                    to: "${mailRecipients}",
+
+                    replyTo: "${mailRecipients}",
+
+                    recipientProviders: [[$class: 'CulpritsRecipientProvider']]
+
+                }
+
+        }
+
+        unstable{
+
+            echo "Unstable Pipeline: ${currentBuild.result}"
+
+            script {
+
+                    def mailRecipients = 'ostan@codecraft.co.in, odsouza@enphaseenergy.com'
+
+                    def jobName = currentBuild.fullDisplayName
+
+                    emailext body: '''${FILE,path="HTMLReporter/index.html"}''',
+
+                    mimeType: 'text/html',
+
+                    subject: "[Jenkins][${currentBuild.result}] Test Automation Report",
+
+                    to: "${mailRecipients}",
+
+                    replyTo: "${mailRecipients}",
+
+                    recipientProviders: [[$class: 'CulpritsRecipientProvider']]
+
+                }
+
+        }
+
+    }
+
+}

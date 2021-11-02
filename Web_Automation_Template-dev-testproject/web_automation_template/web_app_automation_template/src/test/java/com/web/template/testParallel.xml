@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+<suite name="Regression suite" verbose="1" parallel="tests" thread-count="1">
+
+    <test name="S10 Test Cases" >
+        <parameter name="config" value="src/main/resources/device_conf.json"/>
+        <parameter name="environment" value="samsung_s10(9.0)"/>
+        <classes>
+            <class name="com.web.template.LoginTests.LoginTests"/>
+        </classes>
+    </test>
+
+    <test name="S9 Test Cases" >
+        <parameter name="config" value="src/main/resources/device_conf.json"/>
+        <parameter name="environment" value="samsung_s9(8.0)"/>
+        <classes>
+            <class name="com.web.template.LoginTests.LoginTests"/>
+        </classes>
+    </test>
+
+    <test name="S20 Test Cases" >
+        <parameter name="config" value="src/main/resources/device_conf.json"/>
+        <parameter name="environment" value="samsung_s20(10.0)"/>
+        <classes>
+            <class name="com.web.template.LoginTests.LoginTests"/>
+        </classes>
+    </test>
+
+    <test name="OnePlus Test Cases" >
+        <parameter name="config" value="src/main/resources/device_conf.json"/>
+        <parameter name="environment" value="oneplus_7(9.0)"/>
+        <classes>
+            <class name="com.web.template.LoginTests.LoginTests"/>
+        </classes>
+    </test>
+
+
+
+
+</suite>
+

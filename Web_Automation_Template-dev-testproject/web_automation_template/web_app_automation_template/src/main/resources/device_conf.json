@@ -1,0 +1,37 @@
+{
+  "server": "hub-cloud.browserstack.com",
+  "user": "codecraft1",
+  "key": "jxLRH9wEpQpgP2zrKptA",
+
+  "capabilities": {
+    "name": "Enphase Tests",
+    "browserstack.debug": true
+  },
+
+  "environments": {
+    "samsung_s10(9.0)": {
+      "device": "Samsung Galaxy S10",
+      "os": "9.0",
+      "runon": "ANDROID_APP",
+      "deviceid": ""
+    },
+    "samsung_s9(8.0)": {
+      "device": "Samsung Galaxy S9",
+      "os": "8.0",
+      "runon": "ANDROID_APP",
+      "deviceid": ""
+    },
+    "samsung_s20(10.0)": {
+      "device": "Samsung Galaxy S20",
+      "os": "10.0",
+      "runon": "ANDROID_APP",
+      "deviceid": ""
+    },
+    "oneplus_7(9.0)": {
+      "device": "OnePLus 7",
+      "os": "9.0",
+      "runon": "ANDROID_APP",
+      "deviceid": ""
+    }
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "server": "hub-cloud.browserstack.com",
+  "user": "codecraft1",
+  "key": "jxLRH9wEpQpgP2zrKptA",
+
+  "capabilities": {
+    "name": "Enphase Tests",
+    "browserstack.debug": true
+  },
+
+  "environments": {
+    "samsung_7": {
+      "device": "Samsung Galaxy S8",
+      "os": "8.1.0",
+      "runon": "ANDROID_APP",
+      "deviceid": ""
+    },
+    "iphone": {
+      "device": "iPhone 7",
+      "os": "12.2",
+      "runon": "IOS_APP",
+      "deviceid": "8cb0e5c8be2b20398f61b0732d9bb1256af0f6e4"
+    }
+  }
+}

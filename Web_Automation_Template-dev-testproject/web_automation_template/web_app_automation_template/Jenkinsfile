@@ -1,0 +1,130 @@
+pipeline {
+    agent any
+    stages {
+        stage ('build_generate') {
+            steps {
+                script{
+                    env.FAILURE_STAGE = 'build_generate'
+                    def values = model.split('-')
+                    env.device = values[0]
+                    env.os = values[1]
+                    sh 'printenv'
+                    def exists = sh script: '[ -d "${WORKSPACE}/../Enphase_Android_Build/platforms/android/app/build/outputs/apk/debug/app-debug.apk" ]', returnStatus: true
+                    if (exists) {
+                        echo 'file exists'
+                    }
+                    else{
+                         echo 'file doesnot exist'
+                         build job: 'Enphase_Android_Build'
+                    }
+                }
+            }
+        }
+        stage('upload_apk') {
+            steps {
+               script{
+                    env.FAILURE_STAGE = 'upload_apk'
+                }
+                browserstack('9fcaabab-26a6-46c4-86e1-b6bbde22bbef') {}
+                browserstackAppUploader(appPath: '/Users/admin/Downloads/latest-debug.apk'){
+                    script{
+                        env.BROWSERSTACK_APP_ID= "androidapp_qa2"
+                    }
+
+                }
+            }
+        }
+        stage('test') {
+            steps {
+                sh 'export PATH="$PATH:/Users/jenkins/apache-maven-3.6.1/bin"'
+                script{
+                    env.FAILURE_STAGE = 'test'
+                }
+                sh 'mvn clean test -Dsurefire.suiteXmlFiles=src/test/java/com/mobile/template/${type}.xml'
+            }
+        }
+        stage('reports') {
+            steps {
+                script {
+                        env.FAILURE_STAGE = 'reports'
+                        allure([
+                                includeProperties: false,
+                                jdk: '',
+                                properties: [],
+                                reportBuildPolicy: 'ALWAYS',
+                                results: [[path: 'target/allure-results']]
+                        ])
+                }
+            }
+        }
+
+        stage ('global-allure') {
+            when {
+                expression {
+                    return currentBuild.result == 'FAILURE'||currentBuild.result == 'SUCCESS'||currentBuild.result == 'UNSTABLE';
+                }
+            }
+          steps {
+               script{
+                    env.FAILURE_STAGE = 'global-allure'
+
+                     build job: 'AllureReport', parameters: [
+                    string(name: 'Temp', value: "${BUILD_NUMBER}"),
+                    string(name: 'job', value: "${JOB_NAME}")
+                    ]
+
+                }
+            }
+        }
+
+    }
+    post{
+        always{
+            junit testDataPublishers: [[$class: 'AutomateTestDataPublisher']], testResults: 'target/surefire-reports/TEST-*.xml'
+        }
+        success{
+            echo "Success Pipeline: ${currentBuild.fullDisplayName}"
+            script {
+                    def now = new Date().format("yyyy/MM/dd HH:mm", TimeZone.getTimeZone('IST'))
+                    def mailRecipients = 'ostan@codecraft.co.in'
+                    def jobName = currentBuild.fullDisplayName
+                    emailext body: '''${FILE,path="target/surefire-reports/customized-emailable-report.html"}''',
+                    mimeType: 'text/html',
+                    subject: "[Jenkins] ENHO Test Automation Report on ${now}",
+                    to: "${mailRecipients}",
+                    replyTo: "${mailRecipients}",
+                    recipientProviders: [[$class: 'CulpritsRecipientProvider']]
+                }
+        }
+        failure {
+            echo "Failure Pipeline: ${currentBuild.result}"
+            echo "Attention @here ${env.JOB_NAME} #${env.BUILD_NUMBER} has failed."
+            script {
+                    def now = new Date().format("yyyy/MM/dd HH:mm", TimeZone.getTimeZone('IST'))
+                    def mailRecipients = 'ostan@codecraft.co.in, odsouza@enphaseenergy.com'
+                    def jobName = currentBuild.fullDisplayName
+                    emailext body: '''${FILE,path="target/surefire-reports/customized-emailable-report.html"}''',
+                    mimeType: 'text/html',
+                    subject: "[Jenkins] ENHO Test Automation Report on ${now}",
+                    to: "${mailRecipients}",
+                    replyTo: "${mailRecipients}",
+                    recipientProviders: [[$class: 'CulpritsRecipientProvider']]
+                }
+        }
+        unstable{
+            echo "Unstable Pipeline: ${currentBuild.result}"
+            script {
+                    def now = new Date().format("yyyy/MM/dd HH:mm", TimeZone.getTimeZone('IST'))
+                    def mailRecipients = 'ostan@codecraft.co.in, odsouza@enphaseenergy.com'
+                    def jobName = currentBuild.fullDisplayName
+                    emailext body: '''${FILE,path="target/surefire-reports/customized-emailable-report.html"}''',
+                    mimeType: 'text/html',
+                    subject: "[Jenkins] ENHO Test Automation Report on ${now}",
+                    to: "${mailRecipients}",
+                    replyTo: "${mailRecipients}",
+                    recipientProviders: [[$class: 'CulpritsRecipientProvider']]
+                }
+        }
+    }
+
+}
